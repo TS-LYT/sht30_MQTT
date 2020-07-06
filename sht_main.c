@@ -10,5 +10,16 @@
  *      ChangeLog:  1, Release initial version on "06/07/20 14:30:26"
  *                 
  ********************************************************************************/
+void printusage(char *progname)
+{
+    
 
 
+}
+
+int main(int argc, char *argv[])
+{
+
+    
+    return 0;
+}
