@@ -28,7 +28,7 @@
 
 #define I2C_ADDR            1
 #define SHT_ADDR            0X44
-#define SHT_MEAS_MEDREP     0x240B
+#define SHT_MEAS_MEDREP     0x240b
 #define SHT_MEAS_LOWREP     0x2416
 
 
@@ -99,11 +99,11 @@ int sht_read_write(int fd, int sht_addr, uint16_t read_model, uint8_t *buf, int 
     send[0]=(read_model>>8) & 0xff;
     send[1]=read_model & 0xff;
 
-    data.nmsgs = 1;
-    msgs.len = sendsize;
-    msgs.addr = sht_addr;
-    msgs.flags = 0;
-    msgs.buf = send;
+    data.nmsgs = 1;//消息的数目
+    msgs.len = sendsize;//写入目标的字节数
+    msgs.addr = sht_addr;//i2c设备地址  
+    msgs.flags = 0;//flags为0:表示写;为1:表示读 
+    msgs.buf = send;//发送的数据
     data.msgs = &msgs;
     rv=ioctl(fd, I2C_RDWR, &data);
     if(rv < 0)
