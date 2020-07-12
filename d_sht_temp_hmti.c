@@ -11,7 +11,7 @@
  *                 
  ********************************************************************************/
 
-/* #include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <linux/i2c-dev.h>
 #include <time.h>
@@ -21,23 +21,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdlib.h>*/
-
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/types.h>
-#include <sys/stat.h>
-#include <linux/i2c-dev.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <string.h>
-#include <stdint.h>
-#include <time.h>
-#include <errno.h>
-#include <string.h>
+#include <unistd.h>
+#include <linux/i2c.h>
 
 
 #define I2C_ADDR            1
@@ -105,19 +91,20 @@ int sht_read_write(int fd, int sht_addr, uint16_t read_model, uint8_t *buf, int 
 {
     int                        rv = -1;
     int                        sendsize = 2;
-    uint8_t                    send[sendsize];
+    uint8_t                    send[2];
+    struct i2c_msg             msgs;
     struct i2c_rdwr_ioctl_data data;
 
 
-    data.msgs = (struct i2c_msg *)malloc(sizeof( struct i2c_msg));
     send[0]=(read_model>>8) & 0xff;
     send[1]=read_model & 0xff;
 
     data.nmsgs = 1;
-    data.msgs->len = sendsize;
-    data.msgs->addr = sht_addr;
-    data.msgs->flags = 0;
-    data.msgs->buf = send;
+    msgs.len = sendsize;
+    msgs.addr = sht_addr;
+    msgs.flags = 0;
+    msgs.buf = send;
+    data.msgs = &msgs;
     rv=ioctl(fd, I2C_RDWR, &data);
     if(rv < 0)
     {
@@ -128,10 +115,11 @@ int sht_read_write(int fd, int sht_addr, uint16_t read_model, uint8_t *buf, int 
     delay_ms(10);
 
     data.nmsgs =1;
-    data.msgs->len = readsize;
-    data.msgs->addr = sht_addr;
-    data.msgs->flags = 1;
-    data.msgs->buf = buf;
+    msgs.len = readsize;
+    msgs.addr = sht_addr;
+    msgs.flags = 1;
+    msgs.buf = buf;
+    data.msgs = &msgs;
     rv=ioctl(fd, I2C_RDWR, &data);
     if(rv < 0)
     {
@@ -180,6 +168,7 @@ int get_temp_hmti(int i2c_addr, uint8_t sht_addr,  float *temp, float *hmti)
     *temp = -45.0 + (175.0 * ((float) tmp_t / (float) 0xFFFF));
     *hmti = 100.0 * ((float) tmp_h / (float) 0xFFFF);
 
+    close(sht_fd);
     return 1;
 }
 
