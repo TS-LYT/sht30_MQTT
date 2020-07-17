@@ -152,11 +152,11 @@ int get_temp_hmti(int i2c_addr, uint8_t sht_addr,  float *temp, float *hmti)
 
 
 
-int main(int argc, char *argv[])
+/* int main(int argc, char *argv[])
 {
     float temp, hmti;
     get_temp_hmti(I2C_ADDR, SHT_ADDR, &temp, &hmti);
     printf("Temperature %.2fc\n", temp);
     printf("Humidity %.2f%%\n", hmti);
     return 0;
-}
+}*/

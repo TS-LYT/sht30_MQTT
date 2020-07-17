@@ -10,64 +10,39 @@
  *      ChangeLog:  1, Release initial version on "16/07/20 14:32:00"
  *                 
  ********************************************************************************/
-#include <stdio.h>
-
-#include "sht_temp_hmti.h"
-#include "cJSON.h"
+#include "temp_rpt_aly.h"
 
 
-#define  PR_VERSION    "1.0.0"
-#define  HOST     
-#define  PORT    
-#define  USERNAME    
-#define  PASSWD    
-#define  CLIENTID     
-#define  PUBTOPIC    
-#define  PUBQOS     
-#define  KEEPALIVE    
-#define  METHOD   
-#define  ID  
-#define  VERSION       "1.0.0"
-
+char *get_temp_hmti_cjson(broker_t *broker)
 {
-    char    host[128];  /*   MQTT broker server name   */
-    int     port;           /*   MQTT broker listen port   */
-    char    username[64];   /*   username */
-    char    passwd[64];     /*   password  */
-    char    clientid[128];  /*    production ID */
-    char    pubTopic[256];  /*   Publisher topic   */
-    int     pubQos;         /*   Publisher Qos  */
-    int     keepalive;      /*   MQTT broker send PING message to subsciber/publisher keepalive timeout<seconds> */
-    char    method[64];
-    char    id[16];
-    char    version[16];
-}broker_t,*broker_p;
-
-int get_temp_hmti_cjson(char *buf, int bufsize, broker_t *broker)
-{
-    float           temp = 0;
-    float           hmti = 0;
+    float          temp = 31.3;
+    float          hmti = 8;
     cJSON           *root = cJSON_CreateObject();
     cJSON           *params = cJSON_CreateObject();
     char            *data = NULL;
     int             rv = 0;
 
+#if 1
     rv=get_temp_hmti(I2C_ADDR, SHT_ADDR, &temp, &hmti);
     if(rv < 0) 
     {
-        retrun -1;
+        return NULL;
     }
-
+#endif
+    
+    
     cJSON_AddItemToObject(root, "method", cJSON_CreateString(broker->method));
     cJSON_AddItemToObject(root, "id", cJSON_CreateString(broker->id));
-    cJSON_AddItemToObject(params, "CurrentTemperature", cJSON_CreateString(temp));
-    cJSON_AddItemToObject(params, "CurrentHumidity", cJSON_CreateString(hmti));
+    //cJSON_AddItemToObject(params, "CurrentTemperature", cJSON_CreateNumber(temp));
+    //cJSON_AddItemToObject(params, "DetectDistance", cJSON_CreateNumber(2));
+    cJSON_AddItemToObject(params, "CurrentHumidity", cJSON_CreateNumber((int)hmti));
+    cJSON_AddItemToObject(params, "CurrentTemperature", cJSON_CreateNumber(temp));
     cJSON_AddItemToObject(root, "params", params);
-    cJSON_AddItemToObject(root, "vision", cJSON_CreateString(broker->vision));
+    cJSON_AddItemToObject(root, "version", cJSON_CreateString(broker->version));
 
     data=cJSON_Print(root);
     printf("%s\n", data);
-    free(data);
+    return data;
 }   
 
 static void  print_usage( char *progname)
@@ -85,27 +60,56 @@ static void  print_usage( char *progname)
     return ;
 }
 
+void callback(struct mosquitto *mosq, void *obj, int rc)
+{
+    char    *buf;
+    int     mid;
+    int     retain = 0;
+    broker_t *obj1 = obj;
+
+
+    buf=get_temp_hmti_cjson(obj1);
+    printf("hhhhhh%s\n", buf);
+
+    if(!rc)
+    {
+        if( mosquitto_publish(mosq, &mid, obj1->pubTopic,strlen(buf)+1, buf, obj1->pubQos, retain) != MOSQ_ERR_SUCCESS
+          )
+        {
+            printf("Mosq_Publish() error: %s\n", strerror(errno));
+            return ;
+        }
+        printf("pubilush topic:%s\n", obj1->pubTopic) ;
+    }
+    mosquitto_disconnect(mosq);
+
+    //free(buf);
+}
+
+
 
 
 int main(int argc, char *argv[])
 {
-    struct broker_t     broker;     
+    broker_t            broker;     
     char                *progname = NULL;
     int                 rv = -1;
+    int                 opt;
     struct mosquitto    *mosq = NULL;
 
-    broker.host = HOST;
+    strncpy(broker.host, HOST, sizeof(broker.host));
     broker.port = PORT;
-    broker.username = USERNAME;
-    broker.passwd = PASSWD;
-    broker.clientid = CLIENTID;
-    broker.pubTopic = PUBTOPIC;
+    strncpy(broker.username, USERNAME, sizeof(broker.username));
+    strncpy(broker.passwd, PASSWD, sizeof(broker.passwd));
+    strncpy(broker.clientid, CLIENTID, sizeof(broker.clientid));
+    strncpy(broker.pubTopic, PUBTOPIC, sizeof(broker.pubTopic));
     broker.pubQos = PUBQOS;
     broker.keepalive = KEEPALIVE;
-    broker.method = METHOD;
-    broker.id = ID;
-    broker.version = VERSION;
+    strncpy(broker.method, METHOD, sizeof(broker.method));
+    strncpy(broker.id, ID, sizeof(broker.id));
+    strncpy(broker.version, VERSION, sizeof(broker.version));
 
+#if 0
     struct option long_options[]= {
         {"hostname", required_argument, NULL, 'h'},
         {"port", required_argument, NULL, 'p'},
@@ -125,24 +129,24 @@ int main(int argc, char *argv[])
         switch (opt)
         {
             case 'h':
-                host = optarg;
+                broker.host = optarg;
                 break;
             case 'p':
-                port = atoi(optarg);
+                broker.port = atoi(optarg);
                 break;
             case 'u':
-                user = optarg;
+                broker.username = optarg;
                 break;
             case 'P':
-                passwd = optarg;
+                broker.passwd = optarg;
                 break;
             case 'i':
-                clientid = optarg;
+                broker.clientid = optarg;
             case 't':
-                topic = optarg;
+                broker.pubTopic = optarg;
                 break;
             case 'v':
-                printf("%s Version %s\n",progname, PROG_VERSION);
+                printf("%s Version %s\n",progname, PR_VERSION);
                 return 0;
             case 'H':
                 print_usage(progname);
@@ -151,6 +155,7 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+#endif
 
     mosquitto_lib_init();
 
@@ -160,7 +165,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if( mosquitto_username_pw_set(mosq, mqtt.username,mqtt.passwd) !=MOSQ_ERR_SUCCESS)
+    mosquitto_connect_callback_set(mosq, callback);
+
+    if( mosquitto_username_pw_set(mosq, broker.username, broker.passwd) !=MOSQ_ERR_SUCCESS)
     {
         printf("mosquitto username and passwd failure:%s\n",strerror(errno));
         goto cleanup;
@@ -169,18 +176,21 @@ int main(int argc, char *argv[])
     while(1)
     {
         /* 连接MQTT代理*/
-        if(mosquitto_connect(mosq, mqtt.hostname, mqtt.port, mqtt.keepalive) != MOSQ_ERR_SUCCESS )
+        if(mosquitto_connect(mosq, broker.host, broker.port, broker.keepalive) != MOSQ_ERR_SUCCESS )
         {
             printf("mosquitto connect server failure:%s\n",strerror(errno));
             continue;
-            sleep(1);
+            sleep(5);
         }
 
         /* 无线阻塞循环调用loop*/
         mosquitto_loop_forever(mosq, -1, 1 );
-        sleep(10);
+        sleep(60);
     }
-
+cleanup:
+        printf("program will exit\n");
+        mosquitto_destroy(mosq);
+        mosquitto_lib_cleanup();
 
     return 0;
 }
