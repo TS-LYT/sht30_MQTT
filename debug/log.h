@@ -47,13 +47,13 @@
 
 /*-----------------------------------------------------------------------------
  *  如果在编译阶段不定义PRINT_LEVEL，则默认DEBUG模式打印，如果用-D PRINT_LEVEL=?
- *  则在某个级别模式下打印，如下列：gcc log.c -D PRINT_LEVEL=INFO（或者是对应得数字）
+ *  则在某个级别模式下打印，如下列：gcc log.c -D PRINT_LEVEL=DEBUG（或者是对应得数字）
  *  则在INFO模式下打印。
  *-----------------------------------------------------------------------------*/
-#ifndef PRINT__LEVEL
+#ifndef PRINT_LEVEL
 #define DEBUG_LEVEL INFO   //默认级别
-#else
-#define DEBUG_LEVEL PRINT__LEVEL
+#else   
+#define DEBUG_LEVEL PRINT_LEVEL
 #endif
  
 

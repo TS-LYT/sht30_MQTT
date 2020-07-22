@@ -39,7 +39,6 @@ int log_model(int tag, char *file_name)
             return -2;
         }
         LOG_INFO("open %s successful\n", file_name);
-        return fd;
     }
     else 
     {   
