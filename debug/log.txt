@@ -1,0 +1,1 @@
+[I] (log.c, 149) log file rollback successful

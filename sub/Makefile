@@ -11,12 +11,12 @@ OBJ = $(patsubst %.c, %.o, $(SRC))
 
 
 #设定生成可执行文件的名称
-app=mosquitto_pub
+app=mosquitto_sub
 
 #设定使用的编译器
 cc=gcc
 
-conf=emqx_pub.conf
+conf=emqx_sub.conf
 
 #目标 依赖 执行动作的编写
 
