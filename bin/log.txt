@@ -1,0 +1,21 @@
+File size:                0 bytes
+Time of last access:Tue Aug 25 14:15:50 2020
+Time of last modification:Tue Aug 25 14:15:50 2020
+
+192.168.240.134
+1883
+test_username
+test_password
+12345
+test/temperature
+0
+30
+0
+{
+	"method":	"test/temperature",
+	"id":	"9876",
+	"params":	{
+		"CurrentTemperature":	66
+	},
+	"version":	"1.00"
+}
